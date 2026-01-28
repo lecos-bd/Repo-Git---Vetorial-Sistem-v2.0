@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema Vetorial Tridimensional</title>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <style>
+        body {
+            font-family: Helvetica, sans-serif;
+            background-color: #edf6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Cabelalho do topo */
+        header {
+            background-color: #b8dedc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        header img {
+            height: 60px;
+        }
+        header h1 {
+            flex: 1;
+            text-align: left;
+            font-size: 25px;
+            color: #FFFFFF;
+            /*color: #EDF6F9;*/
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 10px;
+        }
+
+         /* Caixa dos filtros  */
+        .filtros, .grafico {
+            background-color: white;
+            border-radius: 8px;
+            margin: 20px;
+            padding: 20px;
+        }
+
+        .filtros {
+            width: 300px;
+        }
+
+         /* Caixa dos gráficos */
+        .grafico {
+            flex: 1;
+            min-width: 520px;
+            background-color: #f8f9fa;
+            flex-wrap: nowrap; /* manter lado a lado, não empilhar */
+            display: flex;
+            gap: 10px; /* espaço entre gráfico e texto */
+            margin: auto;
+            overflow: hidden; 
+        }
+
+        .grafico > #grafico-container {
+            flex: 1 1 60%;  /* ocupar 60% do espaço disponível */
+            min-width: 300px; /* evitar que fique muito pequeno */
+            margin: auto;
+            overflow: hidden; 
+        }
+
+        .grafico > p {
+            flex: 1 1 35%; /* ocupar 35% do espaço disponível */
+            font-size: 14px;
+            color: #333;
+            margin-top: 0; /* remove a margem top para ficar alinhado verticalmente */
+        }
+
+         /* Estilização do texto lateral do gráfico */
+        .texto-grafico {
+            width: 100%;
+            /* margin-top: 0px; */
+            background-color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            max-width: 400px;
+        }
+
+        .texto-grafico .header {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .texto-grafico p {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Estilização do texto lateral do gif */
+        .texto-grafico-gif {
+            width: 100%;
+            /* margin-top: 0px; */
+            background-color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            max-width: 700px;
+        }
+
+        .texto-grafico-gif .header {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .texto-grafico-gif p {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .angulos {
+            margin-top: 20px;
+            color: gray;
+        }
+
+        #gif-container {
+            margin: 20px auto;
+            width: 90%;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        #gif-container > div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="{{ url_for('static', filename='assets/logo-sistema.png') }}" alt="Logo Sistema">
+    <h1>SISTEMA VETORIAL TRIDIMENSIONAL DA TRANSIÇÃO ENERGÉTICA JUSTA</h1>
+    <a href="https://lecos.ufc.br/pt/pagina-de-introducao/m" target="_blank">
+        <img src="{{ url_for('static', filename='assets/logo-lecos.png') }}" alt="Logo LECOS">
+    </a>
+   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+</header>
+
+<div class="container">
+
+    <div class="filtros">
+    <form id="filtros-form">
+        <label for="estado">Estado 1:</label>
+        <select name="estado" id="estado" onchange="atualizarGrafico()">
+            <option value="">(Opcional)</option>
+            {% for est in estados %}
+                <option value="{{ est }}">{{ est }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="ano">Ano 1:</label>
+        <select name="ano" id="ano" onchange="atualizarGrafico()">
+            <option value="">(Opcional)</option>
+            {% for a in anos %}
+                <option value="{{ a }}">{{ a }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="estado2">Estado 2:</label>
+        <select name="estado2" id="estado2" onchange="atualizarGrafico()">
+            <option value="">(Opcional)</option>
+            {% for est in estados %}
+                <option value="{{ est }}">{{ est }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="ano2">Ano 2:</label>
+        <select name="ano2" id="ano2" onchange="atualizarGrafico()">
+            <option value="">(Opcional)</option>
+            {% for a in anos %}
+                <option value="{{ a }}">{{ a }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="tipo-grafico">Tipo de Gráfico:</label>
+        <select id="tipo-grafico" onchange="atualizarGrafico()">
+            <option value="3d">3D</option>
+            <option value="radar">Radar (2D)</option>
+        </select>
+    </form>
+
+    <div class="angulos" id="angulos"></div>
+</div>
+
+    <div class="grafico">
+        <div id="grafico-container">Carregue um gráfico selecionando Estado e Ano.</div>
+        <div class="texto-grafico">
+            <h2 class="header">Descrição do Gráfico</h2>
+            <p style="font-size: 14px; color: #333; margin-top: 15px;">
+                O tetraedro maior que está na coloração cinza claro é a projeção do vetor ideal (x=10,y=10,z=10), ou seja, o estado naquele ano teria o valor máximo do trilema nas três dimensões.
+            </p>
+            <p style="font-size: 14px; color: #333; margin-top: 15px;">
+                O vetor de maior magnitude e de coloração cinza claro é o vetor que parte da origem ao ponto em direção ao ponto ideal (x=10,y=10,z=10) ou máximo possível de atingir.
+            </p>
+            <p style="font-size: 14px; color: #333; margin-top: 15px;">
+                O tetraedro vermelho é a representação do vetor referente ao estado selecionado no ano selecionado.
+            </p>
+            <p style="font-size: 14px; color: #333; margin-top: 15px;">
+                O vetor vermelho é o vetor que parte da origem e segue a direção do ponto dos valores referentes a cada dimensão do trielma para o estado e ano selecinoados.
+            </p>
+            <p style="font-size: 14px; color: #333; margin-top: 15px;">
+                O tetraedro azul é a representação do vetor referente ao estado e ano que, opcionalmente, podem ser selecionados.
+            </p>
+            <p style="font-size: 14px; color: #333; margin-top: 15px;">
+                O vetor azul parte da origem em direção aos valores das dimensões do trilema referentes ao ano e ao estado que fora selecionados opcionalmente.
+            </p>
+            <p style="font-size: 14px; color: #333; margin-top: 15px;">
+                Os pontos azuis são os pontos dos vérticies referentes ao tetraedo azul, com exceção da origem do gráfico.
+            </p>
+            <p style="font-size: 14px; color: #333; margin-top: 15px;">
+                Os pontos vermelhos são os pontos dos vérticies referentes ao tetraedo vermelho, com exceção da origem do gráfico.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<div id="gif-container">
+    <div style="text-align: center;">
+        <img id="gif-image" src="">
+    </div>
+    <div class="texto-grafico-gif">
+        <select id="gif-select">
+            {% for est in estados %}
+                <option value="{{ est }}">{{ est }}</option>
+            {% endfor %}
+        </select>
+        <h3>Visualização Animada do Movimento dos Vetores</h3>
+        <p>Nesta seção é possível observar, através de GIFs, o movimento dos vetores de cada estado, permitindo visualizar para qual dimensão o estado está priorizando.</p>
+        <p>Selecione o estado ao lado para ver a animação correspondente.</p>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <h2>ESTADOS COM VALORES SEMELHANTES</h2>
+    <iframe id="iframe-tabela" src="/tabela_valores" width="100%" style="border: none;"></iframe>
+</div>
+
+
+<script>
+    document.getElementById("filtros-form").onsubmit = async function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const res = await fetch("/grafico", { method: "POST", body: formData });
+        const data = await res.json();
+        console.log("Conteúdo do gráfico HTML:", data.grafico);
+    
+
+        //document.getElementById("grafico-container").innerHTML = data.grafico;
+        const container = document.getElementById("grafico-container");
+        container.innerHTML = "";
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = data.grafico;
+
+        // Adiciona o gráfico (div do Plotly)
+        const plotDiv = wrapper.querySelector(".plotly-graph-div");
+        if (plotDiv) {
+            container.appendChild(plotDiv);
+        }
+
+        // Executa todos os <script> do HTML retornado
+        wrapper.querySelectorAll("script").forEach((oldScript) => {
+            const newScript = document.createElement("script");
+            if (oldScript.src) {
+                newScript.src = oldScript.src;
+            } else {
+                newScript.textContent = oldScript.textContent;
+            }
+            document.body.appendChild(newScript);
+        });
+
+        const angDiv = document.getElementById("angulos");
+        angDiv.innerHTML = Object.entries(data)
+            .filter(([k]) => k.startsWith("angulo"))
+            .map(([_, v]) => `<p>${v}</p>`).join("");
+
+        
+    };
+
+    document.getElementById("gif-select").onchange = async function () {
+        const estado = this.value;
+        const res = await fetch(`/gif/${estado}`);
+        const data = await res.json();
+        document.getElementById("gif-image").src = data.src;
+    };
+
+    // Atualizar o Gráfico
+    async function atualizarGrafico() {
+    const form = document.getElementById("filtros-form");
+    const tipo = document.getElementById("tipo-grafico").value;
+    const formData = new FormData(form);
+
+    const endpoint = tipo === "radar" ? "/grafico_radar" : "/grafico";
+    const res = await fetch(endpoint, { method: "POST", body: formData });
+    const data = await res.json();
+
+    const container = document.getElementById("grafico-container");
+    container.innerHTML = "";
+
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = data.grafico;
+
+    const plotDiv = wrapper.querySelector(".plotly-graph-div");
+    if (plotDiv) container.appendChild(plotDiv);
+
+    wrapper.querySelectorAll("script").forEach((oldScript) => {
+        const newScript = document.createElement("script");
+        if (oldScript.src) {
+            newScript.src = oldScript.src;
+        } else {
+            newScript.textContent = oldScript.textContent;
+        }
+        document.body.appendChild(newScript);
+    });
+
+    const angDiv = document.getElementById("angulos");
+    angDiv.innerHTML = Object.entries(data)
+        .filter(([k]) => k.startsWith("angulo"))
+        .map(([_, v]) => `<p>${v}</p>`).join("");
+}
+
+
+    // Inicializa com valores padrão
+    window.onload = () => {
+        document.getElementById("filtros-form").dispatchEvent(new Event("submit"));
+        document.getElementById("gif-select").dispatchEvent(new Event("change"));
+    };
+</script>
+
+<script>
+    // Ajustar altura automaticamente com base no conteúdo interno do iframe
+    window.addEventListener("message", function (event) {
+        if (event.data.type === "ajustarAltura") {
+            const iframe = document.getElementById("iframe-tabela");
+            iframe.style.height = event.data.altura + "px";
+        }
+    });
+</script>
+
+</body>
+</html>
