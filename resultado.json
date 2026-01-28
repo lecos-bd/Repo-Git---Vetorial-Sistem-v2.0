@@ -1,0 +1,154 @@
+{
+    "6.3703": {
+        "estados": [
+            "CEARÁ",
+            "MATO GROSSO"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2018",
+                "Trilema 2019"
+            ]
+        ]
+    },
+    "6.5185": {
+        "estados": [
+            "RONDONIA",
+            "SÃO PAULO"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2018",
+                "Trilema 2019"
+            ]
+        ]
+    },
+    "6.0148": {
+        "estados": [
+            "PARAÍBA",
+            "RIO DE JANEIRO"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2018",
+                "Trilema 2020"
+            ]
+        ]
+    },
+    "5.3555": {
+        "estados": [
+            "ALAGOAS",
+            "AMAPÁ"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2018",
+                "Trilema 2021"
+            ]
+        ]
+    },
+    "5.8333": {
+        "estados": [
+            "BAHIA",
+            "TOCANTINS"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2018",
+                "Trilema 2022"
+            ]
+        ]
+    },
+    "6.3148": {
+        "estados": [
+            "MATO GROSSO DO SUL",
+            "PIAUÍ"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2018",
+                "Trilema 2022"
+            ]
+        ]
+    },
+    "6.0814": {
+        "estados": [
+            "CEARÁ",
+            "RONDONIA"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2019",
+                "Trilema 2020"
+            ]
+        ]
+    },
+    "7.137": {
+        "estados": [
+            "RIO GRANDE DO SUL",
+            "SANTA CATARINA"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2019",
+                "Trilema 2022"
+            ]
+        ]
+    },
+    "6.1777": {
+        "estados": [
+            "ESPÍRITO SANTO",
+            "RONDONIA"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2020",
+                "Trilema 2021"
+            ],
+            [
+                "Trilema 2020",
+                "Trilema 2022"
+            ],
+            [
+                "Trilema 2021",
+                "Trilema 2022"
+            ]
+        ]
+    },
+    "5.9555": {
+        "estados": [
+            "PERNAMBUCO",
+            "SERGIPE"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2020",
+                "Trilema 2022"
+            ]
+        ]
+    },
+    "6.1": {
+        "estados": [
+            "PIAUÍ",
+            "SÃO PAULO"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2020",
+                "Trilema 2022"
+            ]
+        ]
+    },
+    "5.1814": {
+        "estados": [
+            "AMAPÁ",
+            "MARANHÃO"
+        ],
+        "comparacoes": [
+            [
+                "Trilema 2021",
+                "Trilema 2022"
+            ]
+        ]
+    }
+}
