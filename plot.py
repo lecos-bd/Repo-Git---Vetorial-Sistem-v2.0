@@ -154,7 +154,6 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
                 size=14,
                 color=cor,
                 family="Aptos Black, sans-serif",
-                weight="bold"
             ),
             line=dict(width=6, color=cor),
             marker=dict(size=6, color=cor),
