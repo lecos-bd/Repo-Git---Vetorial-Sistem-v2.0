@@ -6,7 +6,7 @@ import json
 
 # Ler o arquivo Excel
 
-df = pd.read_excel('Médias ponderadas.xlsx',sheet_name='Média Ponderada - Cargas')
+df = pd.read_excel('Médias Ponderadas.xlsx',sheet_name='Média Ponderada - Cargas')
 
 
 # ---------------------- Funções de tratamenro ---------------------- #
