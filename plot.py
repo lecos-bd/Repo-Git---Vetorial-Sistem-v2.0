@@ -242,12 +242,18 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
 
         return traces
 
-    # --- DESENHAR EIXOS X, Y, Z COM DERMACAÇÕES (1 a 10) ---
     def desenhar_eixos(comprimento):
         eixos_traces = []
-        tick_vals = list(range(1, 18))
-        tick_len = 0.3  # Tamanho do tracinho para as marcações
         
+        # 1. Lista para os tracinhos (ticks): Todos os valores de 1 a 17
+        tick_vals_all = list(range(1, 18))
+        
+        # 2. Lista para os textos (números): Apenas múltiplos de 5 (5, 10, 15)
+        tick_vals_text = [v for v in tick_vals_all if v % 5 == 0]
+        
+        tick_len = 0.25  # Tamanho do tracinho
+        qtd_text = len(tick_vals_text) # Quantidade de números a serem plotados
+
         # --- EIXO X (Equidade) ---
         eixos_traces.append(go.Scatter3d(
             x=[0, comprimento], y=[0, 0], z=[0, 0],
@@ -255,17 +261,20 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             textfont=dict(family="Aptos Black, sans-serif", size=12, color="black"),
             line=dict(color='gray', width=4), showlegend=False, hoverinfo='skip'
         ))
-        # Ticks X (Desenhados apontando para Y negativo)
+        # Ticks X (Usa tick_vals_all para desenhar todos os tracinhos)
         x_tick_x, x_tick_y, x_tick_z = [], [], []
-        for val in tick_vals:
+        for val in tick_vals_all:
             x_tick_x.extend([val, val, None])
             x_tick_y.extend([0, -tick_len, None])
             x_tick_z.extend([0, 0, None])
         eixos_traces.append(go.Scatter3d(x=x_tick_x, y=x_tick_y, z=x_tick_z, mode='lines', line=dict(color='black', width=0.25), showlegend=False, hoverinfo='skip'))
-        # Números X
+        
+        # Números X (Usa tick_vals_text para escrever apenas 5, 10, 15...)
         eixos_traces.append(go.Scatter3d(
-            x=tick_vals, y=[-tick_len*2.5]*17, z=[0]*17,
-            mode='text', text=[str(v) for v in tick_vals],
+            x=tick_vals_text, 
+            y=[-tick_len*2.5] * qtd_text, 
+            z=[0] * qtd_text,
+            mode='text', text=[str(v) for v in tick_vals_text],
             textfont=dict(size=8.5, color='gray', family="Aptos Black, sans-serif"),
             showlegend=False, hoverinfo='skip'
         ))
@@ -277,17 +286,20 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             textfont=dict(family="Aptos Black, sans-serif", size=12, color="black"),
             line=dict(color='gray', width=4), showlegend=False, hoverinfo='skip'
         ))
-        # Ticks Y (Desenhados apontando para X negativo)
+        # Ticks Y (Todos os tracinhos)
         y_tick_x, y_tick_y, y_tick_z = [], [], []
-        for val in tick_vals:
+        for val in tick_vals_all:
             y_tick_x.extend([0, -tick_len, None])
             y_tick_y.extend([val, val, None])
             y_tick_z.extend([0, 0, None])
         eixos_traces.append(go.Scatter3d(x=y_tick_x, y=y_tick_y, z=y_tick_z, mode='lines', line=dict(color='black', width=0.25), showlegend=False, hoverinfo='skip'))
-        # Números Y
+        
+        # Números Y (Apenas textos selecionados)
         eixos_traces.append(go.Scatter3d(
-            x=[-tick_len*2.5]*17, y=tick_vals, z=[0]*17,
-            mode='text', text=[str(v) for v in tick_vals],
+            x=[-tick_len*2.5] * qtd_text, 
+            y=tick_vals_text, 
+            z=[0] * qtd_text,
+            mode='text', text=[str(v) for v in tick_vals_text],
             textfont=dict(size=8.5, color='grey', family="Aptos Black, sans-serif"),
             showlegend=False, hoverinfo='skip'
         ))
@@ -299,17 +311,20 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             textfont=dict(family="Aptos Black, sans-serif", size=12, color="black"),
             line=dict(color='grey', width=4), showlegend=False, hoverinfo='skip'
         ))
-        # Ticks Z (Desenhados apontando para X negativo)
+        # Ticks Z (Todos os tracinhos)
         z_tick_x, z_tick_y, z_tick_z = [], [], []
-        for val in tick_vals:
+        for val in tick_vals_all:
             z_tick_x.extend([0, -tick_len, None])
             z_tick_y.extend([0, 0, None])
             z_tick_z.extend([val, val, None])
         eixos_traces.append(go.Scatter3d(x=z_tick_x, y=z_tick_y, z=z_tick_z, mode='lines', line=dict(color='black', width=0.25), showlegend=False, hoverinfo='skip'))
-        # Números Z
+        
+        # Números Z (Apenas textos selecionados)
         eixos_traces.append(go.Scatter3d(
-            x=[-tick_len*2.5]*17, y=[0]*17, z=tick_vals,
-            mode='text', text=[str(v) for v in tick_vals],
+            x=[-tick_len*2.5] * qtd_text, 
+            y=[0] * qtd_text, 
+            z=tick_vals_text,
+            mode='text', text=[str(v) for v in tick_vals_text],
             textfont=dict(size=8.5, color='grey', family="Aptos Black, sans-serif"),
             showlegend=False, hoverinfo='skip'
         ))
