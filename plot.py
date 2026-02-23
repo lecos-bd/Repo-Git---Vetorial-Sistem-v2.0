@@ -364,7 +364,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
 
     # State 1
     if vetor1:
-        for tr in adicionar_vetor_origem(f"{estado1} {ano1}", "black", coord1, position='top right'):
+        for tr in adicionar_vetor_origem(f"{estado1}", "black", coord1, position='top center'):
             fig.add_trace(tr)
         for tr in gerar_tetraedro(f"{estado1} {ano1}", "black", coord1, opacidade=0.1):
             fig.add_trace(tr)
