@@ -94,7 +94,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
         return [mesh, pontos]
     
     # --- ARCOS (Formato Antigo: Setor Preenchido) ---
-    def adicionar_arco_angulo(nome, coord1, coord2, cor_arco, cor_angulo, position, escala, opacidade):
+    def adicionar_arco_angulo(nome, coord1, coord2, cor_arco, cor_angulo, Letra, position, escala, opacidade):
         v1_norm = np.array(coord1) / np.linalg.norm(coord1) if np.linalg.norm(coord1) > 0 else np.array([0,0,0])
         v2_norm = np.array(coord2) / np.linalg.norm(coord2) if np.linalg.norm(coord2) > 0 else np.array([0,0,0])
         
@@ -146,8 +146,8 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             y=[pos_texto[1]], 
             z=[pos_texto[2]],
             mode='text',
-            text=[f"{valor_angulo_graus:.2f}°"],
-            textfont=dict(color=cor_angulo, size=11, family="Aptos Black, sans-serif", weight="bold"),
+            text=[f"{Letra}°"],
+            textfont=dict(color=cor_angulo, size=14, family="Aptos Black, sans-serif"),
             textposition=position,
             hoverinfo='skip',
             showlegend=False
@@ -156,19 +156,20 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
         return [mesh_trace, text_trace]
 
     # --- VETOR ORIGEM (Formato Antigo: Linha + Texto) ---
-    def adicionar_vetor_origem(nome, cor, coord1, position):
-        texto_label = f"{nome}"
-        
+    def adicionar_vetor_origem(nome_label, nome_legenda, cor, coord1, position):
         vector = [
             obter_raio(coord1),
             calcular_angulo_2d(coord1),
             angulo(coord1, np.array([0,0,1]))
         ]
 
+        # String formatada numa única linha para a legenda inferior
+        nome_formatado = f"{nome_legenda} (r = {vector[0]:.2f}, θ = {vector[1]:.2f}°, φ = {vector[2]:.2f}°)"
+
         trace = go.Scatter3d(
             x=[0, coord1[0]], y=[0, coord1[1]], z=[0, coord1[2]],
             mode='lines+markers+text', 
-            text=['', texto_label],     
+            text=['', nome_label],     
             textposition=position, 
             textfont=dict(             
                 size=14,
@@ -177,11 +178,11 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             ),
             line=dict(width=6, color=cor),
             marker=dict(size=6, color=cor),
-            name=f"{nome} (r = {vector[0]:.2f},\n θ = {vector[1]:.2f}°, \n φ = {vector[2]:.2f}°)",
-            legendgroup=nome + f" (r = {vector[0]:.2f},\n θ = {vector[1]:.2f}°, \n φ = {vector[2]:.2f}°)",
+            name=nome_formatado,
+            legendgroup=nome_legenda,
             showlegend=True,
             hovertemplate=(
-                f"{nome}<br>" +
+                f"{nome_label}<br>" +
                 "x=%{x:.2f}, y=%{y:.2f}, z=%{z:.2f}<extra></extra>"
             )
         )
@@ -190,14 +191,12 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     # --- GRID ESFÉRICO (EXTERNO) ---
     def desenhar_grade_primeiro_octante(raio_max):
         grade_traces = []
-        # Meridianos (0 a 90 graus apenas)
         for p in range(0, 91, 15):
             t_vals = np.linspace(0, 90, 50)
             x, y, z = esferica_para_cartesiana(raio_max, t_vals, p)
             grade_traces.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', 
                                            line=dict(color='lightgrey', width=2), 
                                            showlegend=False, hoverinfo='skip'))
-        # Paralelos (0 a 90 graus apenas)
         for t in range(0, 91, 15):
             p_vals = np.linspace(0, 90, 50)
             x, y, z = esferica_para_cartesiana(raio_max, t, p_vals)
@@ -206,21 +205,18 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
                                            showlegend=False, hoverinfo='skip'))
         return grade_traces
 
-    # --- GRIDS PLANOS INTERNOS (Preenche as "paredes" do quadrante) ---
+    # --- GRIDS PLANOS INTERNOS ---
     def desenhar_grades_planas(raio_max):
         traces = []
-        grid_color = 'grey' # Bem sutil
+        grid_color = 'grey'
         grid_width = 0.75
 
-        # --- PLANO XY (Z=0) ---
-        # Arcos concêntricos
         for r in np.linspace(0, raio_max, 6):
             p_vals = np.linspace(0, 90, 50)
             x = r * np.cos(np.radians(p_vals))
             y = r * np.sin(np.radians(p_vals))
             z = np.zeros_like(x)
             traces.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', line=dict(color=grid_color, width=grid_width), opacity=0.25, showlegend=False, hoverinfo='skip'))
-        # Raios
         for p in range(0, 91, 15):
             rad = np.radians(p)
             x = [0, raio_max * np.cos(rad)]
@@ -228,15 +224,12 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             z = [0, 0]
             traces.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', line=dict(color=grid_color, width=grid_width), opacity=0.25, showlegend=False, hoverinfo='skip'))
 
-        # --- PLANO XZ (Y=0) ---
-        # Arcos concêntricos
         for r in np.linspace(0, raio_max, 6):
             t_vals = np.linspace(0, 90, 50)
             x = r * np.sin(np.radians(t_vals))
             y = np.zeros_like(x)
             z = r * np.cos(np.radians(t_vals))
             traces.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', line=dict(color=grid_color, width=grid_width), opacity=0.25, showlegend=False, hoverinfo='skip'))
-        # Raios
         for t in range(0, 91, 15):
             rad = np.radians(t)
             x = [0, raio_max * np.sin(rad)]
@@ -244,15 +237,12 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             z = [0, raio_max * np.cos(rad)]
             traces.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', line=dict(color=grid_color, width=grid_width), opacity=0.25, showlegend=False, hoverinfo='skip'))
 
-        # --- PLANO YZ (X=0) ---
-        # Arcos concêntricos
         for r in np.linspace(0, raio_max, 6):
             t_vals = np.linspace(0, 90, 50)
             x = np.zeros_like(t_vals)
             y = r * np.sin(np.radians(t_vals))
             z = r * np.cos(np.radians(t_vals))
             traces.append(go.Scatter3d(x=x, y=y, z=z, mode='lines', line=dict(color=grid_color, width=grid_width), opacity=0.25, showlegend=False, hoverinfo='skip'))
-        # Raios
         for t in range(0, 91, 15):
             rad = np.radians(t)
             x = [0, 0]
@@ -264,86 +254,63 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
 
     def desenhar_eixos(comprimento):
         eixos_traces = []
-        
-        # 1. Lista para os tracinhos (ticks): Todos os valores de 1 a 17
         tick_vals_all = list(range(1, 18))
-        
-        # 2. Lista para os textos (números): Apenas múltiplos de 5 (5, 10, 15)
         tick_vals_text = [v for v in tick_vals_all if v % 5 == 0]
-        
-        tick_len = 0.25  # Tamanho do tracinho
-        qtd_text = len(tick_vals_text) # Quantidade de números a serem plotados
+        tick_len = 0.25 
+        qtd_text = len(tick_vals_text) 
 
-        # --- EIXO X (Equidade) ---
         eixos_traces.append(go.Scatter3d(
             x=[0, comprimento], y=[0, 0], z=[0, 0],
             mode='lines+text', text=['', 'Energy Equity'], textposition='top left',
-            textfont=dict(family="Aptos Black, sans-serif", size=12, color="black"),
+            textfont=dict(family="Aptos Black, sans-serif", size=10, color="black"),
             line=dict(color='gray', width=4), showlegend=False, hoverinfo='skip'
         ))
-        # Ticks X (Usa tick_vals_all para desenhar todos os tracinhos)
         x_tick_x, x_tick_y, x_tick_z = [], [], []
         for val in tick_vals_all:
             x_tick_x.extend([val, val, None])
             x_tick_y.extend([0, -tick_len, None])
             x_tick_z.extend([0, 0, None])
         eixos_traces.append(go.Scatter3d(x=x_tick_x, y=x_tick_y, z=x_tick_z, mode='lines', line=dict(color='black', width=0.25), showlegend=False, hoverinfo='skip'))
-        
-        # Números X (Usa tick_vals_text para escrever apenas 5, 10, 15...)
         eixos_traces.append(go.Scatter3d(
-            x=tick_vals_text, 
-            y=[-tick_len*2.5] * qtd_text, 
-            z=[0] * qtd_text,
+            x=tick_vals_text, y=[-tick_len*2.5] * qtd_text, z=[0] * qtd_text,
             mode='text', text=[str(v) for v in tick_vals_text],
             textfont=dict(size=8.5, color='gray', family="Aptos Black, sans-serif"),
             showlegend=False, hoverinfo='skip'
         ))
         
-        # --- EIXO Y (Segurança) ---
         eixos_traces.append(go.Scatter3d(
             x=[0, 0], y=[0, comprimento], z=[0, 0],
             mode='lines+text', text=['', 'Energy Security'], textposition='top right',
-            textfont=dict(family="Aptos Black, sans-serif", size=12, color="black"),
+            textfont=dict(family="Aptos Black, sans-serif", size=10, color="black"),
             line=dict(color='gray', width=4), showlegend=False, hoverinfo='skip'
         ))
-        # Ticks Y (Todos os tracinhos)
         y_tick_x, y_tick_y, y_tick_z = [], [], []
         for val in tick_vals_all:
             y_tick_x.extend([0, -tick_len, None])
             y_tick_y.extend([val, val, None])
             y_tick_z.extend([0, 0, None])
         eixos_traces.append(go.Scatter3d(x=y_tick_x, y=y_tick_y, z=y_tick_z, mode='lines', line=dict(color='black', width=0.25), showlegend=False, hoverinfo='skip'))
-        
-        # Números Y (Apenas textos selecionados)
         eixos_traces.append(go.Scatter3d(
-            x=[-tick_len*2.5] * qtd_text, 
-            y=tick_vals_text, 
-            z=[0] * qtd_text,
+            x=[-tick_len*2.5] * qtd_text, y=tick_vals_text, z=[0] * qtd_text,
             mode='text', text=[str(v) for v in tick_vals_text],
             textfont=dict(size=8.5, color='grey', family="Aptos Black, sans-serif"),
             showlegend=False, hoverinfo='skip'
         ))
         
-        # --- EIXO Z (Ambiental) ---
         eixos_traces.append(go.Scatter3d(
             x=[0, 0], y=[0, 0], z=[0, comprimento],
             mode='lines+text', text=['', 'Environment Sustainability'], textposition='top right',
-            textfont=dict(family="Aptos Black, sans-serif", size=12, color="black"),
+            textfont=dict(family="Aptos Black, sans-serif", size=10, color="black"),
             line=dict(color='grey', width=4), showlegend=False, hoverinfo='skip'
         ))
-        # Ticks Z (Todos os tracinhos)
         z_tick_x, z_tick_y, z_tick_z = [], [], []
         for val in tick_vals_all:
             z_tick_x.extend([0, -tick_len, None])
             z_tick_y.extend([0, 0, None])
             z_tick_z.extend([val, val, None])
         eixos_traces.append(go.Scatter3d(x=z_tick_x, y=z_tick_y, z=z_tick_z, mode='lines', line=dict(color='black', width=0.25), showlegend=False, hoverinfo='skip'))
-        
-        # Números Z (Apenas textos selecionados)
         eixos_traces.append(go.Scatter3d(
-            x=[-tick_len*2.5] * qtd_text, 
-            y=[0] * qtd_text, 
-            z=tick_vals_text,
+            x=[-tick_len*2.5] * qtd_text, y=[0] * qtd_text, z=tick_vals_text,
             mode='text', text=[str(v) for v in tick_vals_text],
             textfont=dict(size=8.5, color='grey', family="Aptos Black, sans-serif"),
             showlegend=False, hoverinfo='skip'
@@ -354,18 +321,16 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     def adicionar_sombra_vetor(nome, cor, coord):
         x, y, z = coord[0], coord[1], coord[2]
         
-        # 1. Projected vector (shadow) on the floor
         trace_sombra = go.Scatter3d(
             x=[0, x], y=[0, y], z=[0, 0],
             mode='lines+markers',
-            line=dict(color=cor, width=4), # Slightly thinner than the main vector
+            line=dict(color=cor, width=4),
             marker=dict(size=4, color=cor),
             name=f"Sombra {nome}",
             showlegend=False,
             hoverinfo='skip'
         )
         
-        # 2. Dashed drop-line from the original vector to the shadow
         trace_queda = go.Scatter3d(
             x=[x, x], y=[y, y], z=[z, 0],
             mode='lines',
@@ -377,18 +342,16 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
         )
         return [trace_sombra, trace_queda]
 
-    # Obtém as coordenadas
     coord_ideal = [10,10,10]
-    raio_esfera = np.linalg.norm(coord_ideal) # Raio baseado na norma do ideal
+    raio_esfera = np.linalg.norm(coord_ideal)
 
     coord1 = obter_coord(estado1, ano1) if estado1 and ano1 else None
     coord2 = obter_coord(estado2, ano2) if estado2 and ano2 else None
 
-    # Vetores Polares (Lógica interna atualizada para 2D no plano XY)
     vetor1 = [
         obter_raio(coord1), 
-        calcular_angulo_2d(coord1),          # Theta agora é exclusivamente o ângulo 2D no chão
-        angulo(coord1, np.array([0,0,1]))    # Phi continua sendo a elevação 3D contra o eixo Z
+        calcular_angulo_2d(coord1),          
+        angulo(coord1, np.array([0,0,1]))    
     ] if coord1 else None
 
     vetor2 = [
@@ -397,62 +360,48 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
         angulo(coord2, np.array([0,0,1]))
     ] if coord2 else None
 
-
-
     fig = go.Figure()
 
-    # 1. Grid Esférico (Externo)
     for gt in desenhar_grade_primeiro_octante(raio_esfera): 
         fig.add_trace(gt)
-    
-    # 2. Grades Planas Internas (Preenche o interior)
     for gp in desenhar_grades_planas(raio_esfera):
         fig.add_trace(gp)
-    
-    # 3. Eixos (Comprimento exato do raio + Marcações)
     for ax in desenhar_eixos(raio_esfera):
         fig.add_trace(ax)
 
     # Ideal (Vetor)
-    for tr in adicionar_vetor_origem("IDEAL", "gray", coord_ideal, position='top center'):
+    nome_legenda_ideal = f"Vector<sub>IDEAL</sub>"
+    for tr in adicionar_vetor_origem(nome_legenda_ideal, nome_legenda_ideal, "gray", coord_ideal, position='top center'):
        fig.add_trace(tr)
-    
-    for tr in adicionar_sombra_vetor(f"IDEAL", "gray", coord_ideal):
+    for tr in adicionar_sombra_vetor("IDEAL", "gray", coord_ideal):
         fig.add_trace(tr)
 
     # State 1
     if vetor1:
-        for tr in adicionar_vetor_origem(f"{estado1}", "black", coord1, position='top center'):
+        # Usando a tag HTML <sub> para colocar o ano como subíndice
+        nome_legenda1 = f"Vector<sub>{estado1}<sub>{ano1}</sub></sub>" if ano1 else f"{estado1}"
+        for tr in adicionar_vetor_origem(nome_legenda1, nome_legenda1, "black", coord1, position='top center'):
             fig.add_trace(tr)
-            
         for tr in adicionar_sombra_vetor(f"{estado1}", "black", coord1):
             fig.add_trace(tr)
 
-        # Arcos Eixos
-        for tr in adicionar_arco_angulo(f"{estado1}-Z", coord1, np.array([0, 0, 1]), "black", "black", position='middle center', opacidade=0.35, escala=3.5):
+        for tr in adicionar_arco_angulo(f"{estado1}-Z", coord1, np.array([0, 0, 1]), "black", "black", f"θ<sub>CE</sub>", position='middle center', opacidade=0.35, escala=3.5):
             fig.add_trace(tr)
-        for tr in adicionar_arco_angulo(f"{estado1}-Z", np.array([coord1[0],coord1[1],0]), np.array([1, 0, 0]), "black", "black", position='middle center', opacidade=0.35, escala=3.5):
-            fig.add_trace(tr) 
+        for tr in adicionar_arco_angulo(f"{estado1}-X", np.array([coord1[0],coord1[1],0]), np.array([1, 0, 0]), "black", "black", f"φ<sub>CE</sub>", position='middle center', opacidade=0.35, escala=3.5):
+            fig.add_trace(tr)
 
     # State 2
     if vetor2:
-        for tr in adicionar_vetor_origem(f"{estado2} {ano2}", "gray", coord2, position='top left'):
+        nome_legenda2 = f"Vector<sub>{estado2}<sub>{ano2}</sub></sub>" if ano2 else f"{estado2}"
+        for tr in adicionar_vetor_origem(f"{estado2} {ano2}", nome_legenda2, "gray", coord2, position='top left'):
             fig.add_trace(tr)
-
-        # Arco Ideal (Corrigido para usar coord_ideal)
         for tr in adicionar_arco_angulo(f"{estado2}-Ideal", coord2, coord_ideal, "lightgray", "black", position='top right', opacidade=1, escala=6):
             fig.add_trace(tr)
 
-    # Layout Final
-    titulo_texto = f"Vetorial System - {estado1} ({ano1})"
-    if vetor1 and vetor2:
-        titulo_texto = f"{estado1} ({ano1}) vs {estado2} ({ano2})"
-    elif vetor1:
-        titulo_texto = f"VECTOR {estado1} {ano1} "
-
     margem_range = raio_esfera * 1.15
-    range_eixos = [-1, margem_range] # Pequeno negativo para ver a origem
+    range_eixos = [-1, margem_range] 
 
+    # Layout Final Atualizado
     fig.update_layout(
         scene=dict(
             xaxis=dict(visible=False, range=range_eixos),
@@ -462,15 +411,22 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             aspectmode='cube'
         ),
         scene_camera=dict(eye=dict(x=0.35, y=1.75, z=0.20)),
-        title=dict( 
-            text=titulo_texto,
-            font=dict(family="Aptos Black, sans-serif", size=18, color="black", weight="bold"),
-            x=0.5, xanchor='center'
-        ),
-        width=None, height=700, autosize=True,
+        width=None, height=750, autosize=True,
         showlegend=True,
-        legend=dict(x=0.85, y=0.85, xanchor="center", yanchor="middle", font=dict(size=8), bgcolor='rgba(255,255,255,0.5)'),
-        margin=dict(l=30, r=0, t=80, b=30)
+        # Legenda movida para o fundo, centralizada e formatada com fonte maior
+        legend=dict(
+            x=0.5, 
+            y=-0.1, 
+            xanchor="center", 
+            yanchor="top", 
+            font=dict(size=16, color="black", family="Aptos Black, sans-serif"), 
+            bgcolor='rgba(255,255,255,0.9)',
+            bordercolor="black",
+            borderwidth=1,
+            orientation="v"
+        ),
+        # Margens ajustadas para elevar o gráfico e dar espaço à legenda na base
+        margin=dict(l=30, r=30, t=20, b=200)
     )
 
     def formatar_vetor(v): return f"(x={v[0]:.2f}, y={v[1]:.2f}, z={v[2]:.2f})"
