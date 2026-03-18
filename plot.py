@@ -46,6 +46,20 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             np.dot(coord1, coord2) / (norm_v1 * norm_v2),
             -1, 1
         )))
+    
+    def calcular_angulo_2d(coord):
+        """
+        Calcula o ângulo (azimute) da projeção do vetor no plano XY, 
+        ignorando completamente a altura Z.
+        """
+        x, y = coord[0], coord[1]
+        
+        # Evita erro matemático caso o vetor esteja perfeitamente na origem
+        if x == 0 and y == 0:
+            return 0.0
+            
+        # np.arctan2(y, x) lida automaticamente com os quadrantes
+        return np.degrees(np.arctan2(y, x))
 
     # --- TETRAEDRO (Formato Antigo: Sólido) ---
     def gerar_tetraedro(nome, cor, vetor, opacidade=0.6):
@@ -145,6 +159,12 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     def adicionar_vetor_origem(nome, cor, coord1, position):
         texto_label = f"{nome}"
         
+        vector = [
+            obter_raio(coord1),
+            calcular_angulo_2d(coord1),
+            angulo(coord1, np.array([0,0,1]))
+        ]
+
         trace = go.Scatter3d(
             x=[0, coord1[0]], y=[0, coord1[1]], z=[0, coord1[2]],
             mode='lines+markers+text', 
@@ -157,8 +177,8 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             ),
             line=dict(width=6, color=cor),
             marker=dict(size=6, color=cor),
-            name=f"Vector {nome}",
-            legendgroup=nome,
+            name=f"{nome} (r = {vector[0]:.2f},\n θ = {vector[1]:.2f}°, \n φ = {vector[2]:.2f}°)",
+            legendgroup=nome + f" (r = {vector[0]:.2f},\n θ = {vector[1]:.2f}°, \n φ = {vector[2]:.2f}°)",
             showlegend=True,
             hovertemplate=(
                 f"{nome}<br>" +
@@ -330,6 +350,32 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
         ))
 
         return eixos_traces
+    
+    def adicionar_sombra_vetor(nome, cor, coord):
+        x, y, z = coord[0], coord[1], coord[2]
+        
+        # 1. Projected vector (shadow) on the floor
+        trace_sombra = go.Scatter3d(
+            x=[0, x], y=[0, y], z=[0, 0],
+            mode='lines+markers',
+            line=dict(color=cor, width=4), # Slightly thinner than the main vector
+            marker=dict(size=4, color=cor),
+            name=f"Sombra {nome}",
+            showlegend=False,
+            hoverinfo='skip'
+        )
+        
+        # 2. Dashed drop-line from the original vector to the shadow
+        trace_queda = go.Scatter3d(
+            x=[x, x], y=[y, y], z=[z, 0],
+            mode='lines',
+            line=dict(color=cor, width=3, dash='dash'),
+            opacity=0.5,
+            name=f"Projeção {nome}",
+            showlegend=False,
+            hoverinfo='skip'
+        )
+        return [trace_sombra, trace_queda]
 
     # Obtém as coordenadas
     coord_ideal = [10,10,10]
@@ -338,9 +384,20 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     coord1 = obter_coord(estado1, ano1) if estado1 and ano1 else None
     coord2 = obter_coord(estado2, ano2) if estado2 and ano2 else None
 
-    # Vetores Polares (para logica interna)
-    vetor1 = [obter_raio(coord1), angulo(coord1,np.array([1,0,0])), angulo(coord1,np.array([0,0,1]))] if coord1 else None
-    vetor2 = [obter_raio(coord2), angulo(coord2,np.array([1,0,0])), angulo(coord2,np.array([0,0,1]))] if coord2 else None
+    # Vetores Polares (Lógica interna atualizada para 2D no plano XY)
+    vetor1 = [
+        obter_raio(coord1), 
+        calcular_angulo_2d(coord1),          # Theta agora é exclusivamente o ângulo 2D no chão
+        angulo(coord1, np.array([0,0,1]))    # Phi continua sendo a elevação 3D contra o eixo Z
+    ] if coord1 else None
+
+    vetor2 = [
+        obter_raio(coord2), 
+        calcular_angulo_2d(coord2), 
+        angulo(coord2, np.array([0,0,1]))
+    ] if coord2 else None
+
+
 
     fig = go.Figure()
 
@@ -348,7 +405,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     for gt in desenhar_grade_primeiro_octante(raio_esfera): 
         fig.add_trace(gt)
     
-    # 2. Grades Planas Internas (NOVO - Preenche o interior)
+    # 2. Grades Planas Internas (Preenche o interior)
     for gp in desenhar_grades_planas(raio_esfera):
         fig.add_trace(gp)
     
@@ -359,21 +416,23 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     # Ideal (Vetor)
     for tr in adicionar_vetor_origem("IDEAL", "gray", coord_ideal, position='top center'):
        fig.add_trace(tr)
-    for tr in gerar_tetraedro("Ideal Tetrahedron", "black", coord_ideal, opacidade=0.08):
+    
+    for tr in adicionar_sombra_vetor(f"IDEAL", "gray", coord_ideal):
         fig.add_trace(tr)
 
     # State 1
     if vetor1:
         for tr in adicionar_vetor_origem(f"{estado1}", "black", coord1, position='top center'):
             fig.add_trace(tr)
-        for tr in gerar_tetraedro(f"{estado1} {ano1}", "black", coord1, opacidade=0.1):
+            
+        for tr in adicionar_sombra_vetor(f"{estado1}", "black", coord1):
             fig.add_trace(tr)
 
         # Arcos Eixos
-        for tr in adicionar_arco_angulo(f"{estado1}-X", coord1, np.array([1, 0, 0]), "black", "black", position='top right', opacidade=0.35, escala=2.0):
+        for tr in adicionar_arco_angulo(f"{estado1}-Z", coord1, np.array([0, 0, 1]), "black", "black", position='middle center', opacidade=0.35, escala=3.5):
             fig.add_trace(tr)
-        for tr in adicionar_arco_angulo(f"{estado1}-Z", coord1, np.array([0, 0, 1]), "black", "black", position='top center', opacidade=0.35, escala=2.5):
-            fig.add_trace(tr)
+        for tr in adicionar_arco_angulo(f"{estado1}-Z", np.array([coord1[0],coord1[1],0]), np.array([1, 0, 0]), "black", "black", position='middle center', opacidade=0.35, escala=3.5):
+            fig.add_trace(tr) 
 
     # State 2
     if vetor2:
@@ -381,7 +440,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             fig.add_trace(tr)
 
         # Arco Ideal (Corrigido para usar coord_ideal)
-        for tr in adicionar_arco_angulo(f"{estado2}-Ideal", coord2, coord_ideal, "lightgray", "black", position='top right', opacidade=1, escala=4.0):
+        for tr in adicionar_arco_angulo(f"{estado2}-Ideal", coord2, coord_ideal, "lightgray", "black", position='top right', opacidade=1, escala=6):
             fig.add_trace(tr)
 
     # Layout Final
@@ -389,7 +448,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     if vetor1 and vetor2:
         titulo_texto = f"{estado1} ({ano1}) vs {estado2} ({ano2})"
     elif vetor1:
-        titulo_texto = f"VECTOR {estado1} {ano1} (r = {vetor1[0]:.2f} , θ = {vetor1[1]:.2f}° , φ = {vetor1[2]:.2f}°)"
+        titulo_texto = f"VECTOR {estado1} {ano1} "
 
     margem_range = raio_esfera * 1.15
     range_eixos = [-1, margem_range] # Pequeno negativo para ver a origem
@@ -402,7 +461,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             bgcolor="white", 
             aspectmode='cube'
         ),
-        scene_camera=dict(eye=dict(x=0.5, y=-2, z=0)),
+        scene_camera=dict(eye=dict(x=0.35, y=1.75, z=0.20)),
         title=dict( 
             text=titulo_texto,
             font=dict(family="Aptos Black, sans-serif", size=18, color="black", weight="bold"),
@@ -411,7 +470,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
         width=None, height=700, autosize=True,
         showlegend=True,
         legend=dict(x=0.85, y=0.85, xanchor="center", yanchor="middle", font=dict(size=8), bgcolor='rgba(255,255,255,0.5)'),
-        margin=dict(l=90, r=0, t=80, b=30)
+        margin=dict(l=30, r=0, t=80, b=30)
     )
 
     def formatar_vetor(v): return f"(x={v[0]:.2f}, y={v[1]:.2f}, z={v[2]:.2f})"
@@ -422,19 +481,17 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     if vetor1:
         resultado.update({
             "vetor_real_1": f"{estado1} {ano1}: {formatar_vetor(coord1)}",
-            "angulo_ideal_1": f"Ângulo entre {estado1} e Ideal: {angulo(coord1, coord_ideal):.2f}°",
-            "angulo_x_1": f"Ângulo entre {estado1} e eixo X: {angulo(coord1, eixo_x):.2f}°",
-            "angulo_y_1": f"Ângulo entre {estado1} e eixo Y: {angulo(coord1, eixo_y):.2f}°",
-            "angulo_z_1": f"Ângulo entre {estado1} e eixo Z: {angulo(coord1, eixo_z):.2f}°",
+            "angulo_ideal_1": f"Ângulo 3D entre {estado1} e Ideal: {angulo(coord1, coord_ideal):.2f}°",
+            "angulo_x_1": f"Ângulo 2D (Azimute) no plano XY: {calcular_angulo_2d(coord1):.2f}°",
+            "angulo_z_1": f"Ângulo 3D (Elevação) com eixo Z: {angulo(coord1, eixo_z):.2f}°",
         })
 
     if vetor2:
         resultado.update({
             "vetor_real_2": f"{estado2} {ano2}: {formatar_vetor(coord2)}",
-            "angulo_ideal_2": f"Ângulo entre {estado2} e Ideal: {angulo(coord2, coord_ideal):.2f}°",
-            "angulo_x_2": f"Ângulo entre {estado2} e eixo X: {angulo(coord2, eixo_x):.2f}°",
-            "angulo_y_2": f"Ângulo entre {estado2} e eixo Y: {angulo(coord2, eixo_y):.2f}°",
-            "angulo_z_2": f"Ângulo entre {estado2} e eixo Z: {angulo(coord2, eixo_z):.2f}°",
+            "angulo_ideal_2": f"Ângulo 3D entre {estado2} e Ideal: {angulo(coord2, coord_ideal):.2f}°",
+            "angulo_x_2": f"Ângulo 2D (Azimute) no plano XY: {calcular_angulo_2d(coord2):.2f}°",
+            "angulo_z_2": f"Ângulo 3D (Elevação) com eixo Z: {angulo(coord2, eixo_z):.2f}°",
         })
 
     return fig.to_html(full_html=False, include_plotlyjs='cdn'), resultado
@@ -537,7 +594,7 @@ def gerar_grafico_radar(estado1, ano1, estado2=None, ano2=None):
         legend=dict(
             x=1.15, # Posiciona a legenda mais à direita, próxima à borda
             y=1, 
-            xanchor="right", 
+            xanchor="left", 
             yanchor="top",
             font=dict(size=10, family="Aptos Black, sans-serif"), 
             bgcolor='rgba(255,255,255,0.5)', 
