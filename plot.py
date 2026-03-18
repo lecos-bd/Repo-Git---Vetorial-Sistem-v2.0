@@ -157,14 +157,18 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
 
     # --- VETOR ORIGEM (Formato Antigo: Linha + Texto) ---
     def adicionar_vetor_origem(nome_label, nome_legenda, cor, coord1, position):
+        
         vector = [
             obter_raio(coord1),
             calcular_angulo_2d(coord1),
             angulo(coord1, np.array([0,0,1]))
         ]
 
-        # String formatada numa única linha para a legenda inferior
-        nome_formatado = f"{nome_legenda} (r = {vector[0]:.2f}, θ = {vector[1]:.2f}°, φ = {vector[2]:.2f}°)"
+        if nome_legenda == f"Vector<sub>IDEAL</sub>":
+            nome_formatado = f"{nome_legenda} (r' = {vector[0]:.2f}, θ' = {vector[1]:.2f}°, φ' = {vector[2]:.2f}°)"
+        else:
+            # String formatada numa única linha para a legenda inferior
+            nome_formatado = f"{nome_legenda} (r = {vector[0]:.2f}, θ = {vector[1]:.2f}°, φ = {vector[2]:.2f}°)"
 
         trace = go.Scatter3d(
             x=[0, coord1[0]], y=[0, coord1[1]], z=[0, coord1[2]],
@@ -371,7 +375,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
 
     # Ideal (Vetor)
     nome_legenda_ideal = f"Vector<sub>IDEAL</sub>"
-    for tr in adicionar_vetor_origem(nome_legenda_ideal, nome_legenda_ideal, "gray", coord_ideal, position='top center'):
+    for tr in adicionar_vetor_origem("IDEAL", nome_legenda_ideal, "gray", coord_ideal, position='top center'):
        fig.add_trace(tr)
     for tr in adicionar_sombra_vetor("IDEAL", "gray", coord_ideal):
         fig.add_trace(tr)
@@ -380,14 +384,14 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     if vetor1:
         # Usando a tag HTML <sub> para colocar o ano como subíndice
         nome_legenda1 = f"Vector<sub>{estado1}<sub>{ano1}</sub></sub>" if ano1 else f"{estado1}"
-        for tr in adicionar_vetor_origem(nome_legenda1, nome_legenda1, "black", coord1, position='top center'):
+        for tr in adicionar_vetor_origem(f"{estado1}", nome_legenda1, "black", coord1, position='top center'):
             fig.add_trace(tr)
         for tr in adicionar_sombra_vetor(f"{estado1}", "black", coord1):
             fig.add_trace(tr)
 
-        for tr in adicionar_arco_angulo(f"{estado1}-Z", coord1, np.array([0, 0, 1]), "black", "black", f"θ<sub>CE</sub>", position='middle center', opacidade=0.35, escala=3.5):
+        for tr in adicionar_arco_angulo(f"{estado1}-Z", coord1, np.array([0, 0, 1]), "black", "black", f"θ", position='middle center', opacidade=0.35, escala=3.5):
             fig.add_trace(tr)
-        for tr in adicionar_arco_angulo(f"{estado1}-X", np.array([coord1[0],coord1[1],0]), np.array([1, 0, 0]), "black", "black", f"φ<sub>CE</sub>", position='middle center', opacidade=0.35, escala=3.5):
+        for tr in adicionar_arco_angulo(f"{estado1}-X", np.array([coord1[0],coord1[1],0]), np.array([1, 0, 0]), "black", "black", f"φ", position='middle center', opacidade=0.35, escala=3.5):
             fig.add_trace(tr)
 
     # State 2
