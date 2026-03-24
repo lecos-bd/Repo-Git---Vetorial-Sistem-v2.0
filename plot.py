@@ -146,7 +146,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             y=[pos_texto[1]], 
             z=[pos_texto[2]],
             mode='text',
-            text=[f"{Letra}°"],
+            text=[f"{Letra}"],
             textfont=dict(color=cor_angulo, size=14, family="Aptos Black, sans-serif"),
             textposition=position,
             hoverinfo='skip',
@@ -389,9 +389,9 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
         for tr in adicionar_sombra_vetor(f"{estado1}", "black", coord1):
             fig.add_trace(tr)
 
-        for tr in adicionar_arco_angulo(f"{estado1}-Z", coord1, np.array([0, 0, 1]), "black", "black", f"θ", position='middle center', opacidade=0.35, escala=3.5):
+        for tr in adicionar_arco_angulo(f"{estado1}-Z", coord1, np.array([0, 0, 1]), "black", "black", f"φ", position='middle center', opacidade=0.35, escala=3.5):
             fig.add_trace(tr)
-        for tr in adicionar_arco_angulo(f"{estado1}-X", np.array([coord1[0],coord1[1],0]), np.array([1, 0, 0]), "black", "black", f"φ", position='middle center', opacidade=0.35, escala=3.5):
+        for tr in adicionar_arco_angulo(f"{estado1}-X", np.array([coord1[0],coord1[1],0]), np.array([1, 0, 0]), "black", "black", f"θ", position='middle center', opacidade=0.35, escala=3.5):
             fig.add_trace(tr)
 
     # State 2
@@ -434,7 +434,6 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
     )
 
     def formatar_vetor(v): return f"(x={v[0]:.2f}, y={v[1]:.2f}, z={v[2]:.2f})"
-    eixo_x, eixo_y, eixo_z = [1,0,0], [0,1,0], [0,0,1]
     
     resultado = {"vetor_ideal": f"Ideal: {formatar_vetor(coord_ideal)}"}
 
@@ -443,7 +442,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             "vetor_real_1": f"{estado1} {ano1}: {formatar_vetor(coord1)}",
             "angulo_ideal_1": f"Ângulo 3D entre {estado1} e Ideal: {angulo(coord1, coord_ideal):.2f}°",
             "angulo_x_1": f"Ângulo 2D (Azimute) no plano XY: {calcular_angulo_2d(coord1):.2f}°",
-            "angulo_z_1": f"Ângulo 3D (Elevação) com eixo Z: {angulo(coord1, eixo_z):.2f}°",
+            "angulo_z_1": f"Ângulo 3D (Elevação) com eixo Z: {angulo(coord1, [0,0,1]):.2f}°",
         })
 
     if vetor2:
@@ -451,7 +450,7 @@ def gerar_grafico(estado1, ano1, estado2=None, ano2=None):
             "vetor_real_2": f"{estado2} {ano2}: {formatar_vetor(coord2)}",
             "angulo_ideal_2": f"Ângulo 3D entre {estado2} e Ideal: {angulo(coord2, coord_ideal):.2f}°",
             "angulo_x_2": f"Ângulo 2D (Azimute) no plano XY: {calcular_angulo_2d(coord2):.2f}°",
-            "angulo_z_2": f"Ângulo 3D (Elevação) com eixo Z: {angulo(coord2, eixo_z):.2f}°",
+            "angulo_z_2": f"Ângulo 3D (Elevação) com eixo Z: {angulo(coord2, e[0,0,1]):.2f}°",
         })
 
     return fig.to_html(full_html=False, include_plotlyjs='cdn'), resultado
